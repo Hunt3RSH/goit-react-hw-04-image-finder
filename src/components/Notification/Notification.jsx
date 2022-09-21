@@ -1,9 +1,17 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { Paragraph } from './Notification.styled';
+import { InitWrapper, SubTitle, Title } from './Notification.styled';
 
-export const Notification = ({ message }) => <Paragraph>{message}</Paragraph>;
+export const InfoTitle = () => (
+  <InitWrapper>
+    <Title>No images yet</Title>
+    <SubTitle>try to write something in the search</SubTitle>
+  </InitWrapper>
+);
 
-Notification.propTypes = {
-  message: PropTypes.string,
+InfoTitle.defaultProps = {
+  children: [],
+};
+
+InfoTitle.propTypes = {
+  children: PropTypes.node,
 };

@@ -1,67 +1,115 @@
-import { Component } from 'react';
-import { nanoid } from 'nanoid';
-import { Notify } from 'notiflix';
-import { Section } from './Section/Section';
-import { ContactForm } from './ContactForm/ContactForm';
-import { Contacts } from './Contacts/Contacts';
+import React, { Component } from 'react';
+import pixFetch from '../services/index';
+import { Blocks } from 'react-loader-spinner';
 
-export class App extends Component {
+import Button from './Button/Button';
+import ImageGallery from './ImageGallery/ImageGallery';
+import ImageGalleryItem from './ImageGalleryItem/ImageGalleryItem';
+import Modal from './Modal/Modal';
+import SearchBar from './Searchbar/Searchbar';
+import { AppWrapper } from './App.styled';
+import { InfoTitle } from './Notification/Notification';
+import { LoaderWrapper } from './Loader/Loader.styled';
+import { toast } from 'react-toastify';
+
+class App extends Component {
   state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '777-77-70' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
+    photos: [],
+    searchQuery: '',
+    status: 'idle',
+    showModal: false,
+    clickedImg: {},
+    page: 1,
+    totalHits: 0,
   };
 
-  componentDidMount() {
-    if (localStorage.getItem('contacts')) {
-      this.setState(() => {
-        return {
-          contacts: [...JSON.parse(localStorage.getItem('contacts'))],
-        };
-      });
-    }
-  }
+  resetPage = () => {
+    this.setState({
+      photos: [],
+      page: 1,
+    });
+  };
 
-  componentDidUpdate(_, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  getValue = searchValue => {
+    this.resetPage();
+    this.setState({ searchQuery: searchValue });
+    pixFetch(searchValue)
+      .then(data => {
+        this.setState({
+          totalHits: data.totalHits,
+        });
+        if (data.totalHits >= 1) {
+          toast.success(`GJ we found ${data.totalHits} images `);
+        }
+        this.onHandleData(data.hits);
+      })
+      .catch(error => console.log(error));
+  };
 
-  onGetDataForm = data => {
-    const hasName = this.state.contacts.some(
-      el => el.name.toLowerCase() === data.name.toLowerCase()
-    );
-    if (hasName) {
-      Notify.warning(`Contact "${data.name}" is already in contacts.`);
+  onLoadMore = () => {
+    this.setState(prevState => ({
+      status: 'pending',
+      page: (prevState.page += 1),
+    }));
+    pixFetch(this.state.searchQuery, this.state.page + 1)
+      .then(data => this.onHandleData(data.hits))
+      .catch(error => console.log(error));
+  };
+
+  onHandleData = data => {
+    if (!data.length) {
+      toast.error(`No result by ${this.state.searchQuery}. Try something else`);
       return;
     }
-
-    this.setState(p => ({
-      contacts: [...p.contacts, { ...data, id: nanoid() }],
-    }));
+    this.setState(prevState =>
+      prevState.searchQuery !== this.state.searchQuery
+        ? { photos: data, status: 'loaded' }
+        : { photos: [...this.state.photos, ...data], status: 'loaded' }
+    );
   };
 
-  deleteItem = deletedId => {
-    this.setState(p => ({
-      contacts: p.contacts.filter(({ id }) => id !== deletedId),
-    }));
+  onHandleClick = click => {
+    const foundImage = this.state.photos.find(photo => photo.tags === click);
+    this.setState({ clickedImg: foundImage, showModal: true });
+  };
+
+  onCloseModal = () => {
+    this.setState({ showModal: false });
   };
 
   render() {
-    const { contacts } = this.state;
+    const { totalHits, photos, status, showModal, clickedImg } = this.state;
     return (
-      <>
-        <Section title="Phonebook">
-          <ContactForm onSubmit={this.onGetDataForm} />
-        </Section>
-        <Section title="Contacts">
-          <Contacts contacts={contacts} onClickDelete={this.deleteItem} />
-        </Section>
-      </>
+      <AppWrapper>
+        <SearchBar onSubmit={this.getValue} />
+        {photos.length < 1 && <InfoTitle />}
+        <ImageGallery>
+          <ImageGalleryItem
+            photos={photos}
+            onHandleClick={this.onHandleClick}
+          />
+        </ImageGallery>
+        {status === 'pending' && (
+          <LoaderWrapper>
+            <Blocks
+              visible={true}
+              height="80"
+              width="80"
+              ariaLabel="blocks-loading"
+              wrapperStyle={{}}
+              wrapperClass="blocks-wrapper"
+            />
+          </LoaderWrapper>
+        )}
+        {photos.length !== totalHits && photos.length >= 1 && (
+          <Button onLoadMore={this.onLoadMore} />
+        )}
+        {showModal && (
+          <Modal photo={clickedImg} onCloseModal={this.onCloseModal}></Modal>
+        )}
+      </AppWrapper>
     );
   }
 }
+
+export default App;
