@@ -43,7 +43,7 @@ const App = () => {
         .catch(error => console.log(error))
         .finally(() => setStatus(''));
     }
-  }, [searchQuery, page]);
+  }, [searchQuery, page, onHandleData]);
 
   const onLoadMore = () => {
     setStatus('pending');
