@@ -34,16 +34,17 @@ const App = () => {
       setStatus('pending');
       pixFetch(searchQuery, page)
         .then(data => {
+          onHandleData(data.hits);
           setTotalHits(data.totalHits);
           if (data.totalHits >= 1) {
             toast.success(`GJ we found ${data.totalHits} images `);
           }
-          onHandleData(data.hits);
         })
         .catch(error => console.log(error))
         .finally(() => setStatus(''));
     }
-  }, [searchQuery, page, onHandleData]);
+    // eslint-disable-next-line
+  }, [searchQuery, page]);
 
   const onLoadMore = () => {
     setStatus('pending');
