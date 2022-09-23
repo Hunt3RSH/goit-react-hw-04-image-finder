@@ -27,11 +27,6 @@ const App = () => {
     resetPage();
     setSearchQuery(searchValue);
     setPage(1);
-    pixFetch(searchQuery).then(data => {
-      if (data.totalHits >= 1) {
-        toast.success(`GJ we found ${data.totalHits} images `);
-      }
-    });
   };
 
   useEffect(() => {
@@ -53,6 +48,11 @@ const App = () => {
   };
 
   const onHandleData = data => {
+    pixFetch(searchQuery).then(data => {
+      if (data.totalHits >= 1) {
+        toast.success(`GJ we found ${data.totalHits} images `);
+      }
+    });
     if (!data.length) {
       toast.error(`No result by "${searchQuery}." Try something else`);
       return;
