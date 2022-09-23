@@ -1,4 +1,6 @@
-import { Component } from 'react';
+import React from 'react';
+import { useState } from 'react';
+
 import PropTypes from 'prop-types';
 import {
   SearchbarHeader,
@@ -12,47 +14,44 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSearch } from 'react-icons/fa';
 
-class Searchbar extends Component {
-  state = { value: '' };
+const Searchbar = ({ onSubmit }) => {
+  const [value, setValue] = useState('');
 
-  onHandleInput = e => {
-    this.setState({ value: e.currentTarget.value });
+  const onHandleInput = e => {
+    setValue(e.currentTarget.value);
   };
 
-  onHandleSubmit = e => {
+  const onHandleSubmit = e => {
     e.preventDefault();
-    if (this.state.value.trim() === '') {
+    if (value.trim() === '') {
       toast.info('Enter your search data 💖');
       return;
     }
-    const { onSubmit } = this.props;
-    onSubmit(this.state.value);
-    this.setState({ value: '' });
+    onSubmit(value);
+    setValue('');
   };
 
-  render() {
-    return (
-      <SearchbarHeader>
-        <ToastContainer />
-        <SearchForm onSubmit={this.onHandleSubmit}>
-          <SearchFormBtn type="submit">
-            <FaSearch size="25" />
-            <SearchFormLabel> Search</SearchFormLabel>
-          </SearchFormBtn>
-          <SearchFormInput
-            type="text"
-            name="search"
-            value={this.state.value}
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            onChange={this.onHandleInput}
-          />
-        </SearchForm>
-      </SearchbarHeader>
-    );
-  }
-}
+  return (
+    <SearchbarHeader>
+      <ToastContainer />
+      <SearchForm onSubmit={onHandleSubmit}>
+        <SearchFormBtn type="submit">
+          <FaSearch size="25" />
+          <SearchFormLabel> Search</SearchFormLabel>
+        </SearchFormBtn>
+        <SearchFormInput
+          type="text"
+          name="search"
+          value={value}
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          onChange={onHandleInput}
+        />
+      </SearchForm>
+    </SearchbarHeader>
+  );
+};
 
 Searchbar.propTypes = { onSubmit: PropTypes.func.isRequired };
 

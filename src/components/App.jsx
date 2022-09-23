@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import pixFetch from '../services/index';
 import { Blocks } from 'react-loader-spinner';
 
@@ -9,109 +10,91 @@ import Modal from './Modal/Modal';
 import SearchBar from './Searchbar/Searchbar';
 import { AppWrapper } from './App.styled';
 import { InfoTitle } from './Notification/Notification';
-import { LoaderWrapper } from './Loader/Loader.styled';
 import { toast } from 'react-toastify';
 
-class App extends Component {
-  state = {
-    photos: [],
-    searchQuery: '',
-    status: 'idle',
-    showModal: false,
-    clickedImg: {},
-    page: 1,
-    totalHits: 0,
+const App = () => {
+  const [photos, setPhotos] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [status, setStatus] = useState('idle');
+  const [showModal, setShowModal] = useState(false);
+  const [clickedImg, setClickedImg] = useState({});
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+
+  const resetPage = () => setPhotos([]);
+
+  const getValue = searchValue => {
+    resetPage();
+    setSearchQuery(searchValue);
+    setPage(1);
   };
 
-  resetPage = () => {
-    this.setState({
-      photos: [],
-      page: 1,
-    });
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setStatus('pending');
+      pixFetch(searchQuery, page)
+        .then(data => {
+          if (data.totalHits >= 1) {
+            toast.success(`GJ we found ${data.totalHits} images `);
+          }
+          onHandleData(data.hits);
+        })
+        .catch(error => console.log(error))
+        .finally(() => setStatus(''));
+    }
+  }, [searchQuery, page]);
+
+  const onLoadMore = () => {
+    setStatus('pending');
+    pixFetch(searchQuery, page + 1)
+      .then(data => onHandleData(data.hits))
+      .catch(error => console.log(error))
+      .finally(() => setStatus(''));
   };
 
-  getValue = searchValue => {
-    this.resetPage();
-    this.setState({ searchQuery: searchValue });
-    pixFetch(searchValue)
-      .then(data => {
-        this.setState({
-          totalHits: data.totalHits,
-        });
-        if (data.totalHits >= 1) {
-          toast.success(`GJ we found ${data.totalHits} images `);
-        }
-        this.onHandleData(data.hits);
-      })
-      .catch(error => console.log(error));
-  };
-
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      status: 'pending',
-      page: (prevState.page += 1),
-    }));
-    pixFetch(this.state.searchQuery, this.state.page + 1)
-      .then(data => this.onHandleData(data.hits))
-      .catch(error => console.log(error));
-  };
-
-  onHandleData = data => {
+  const onHandleData = data => {
     if (!data.length) {
-      toast.error(
-        `No result by "${this.state.searchQuery}." Try something else`
-      );
+      toast.error(`No result by "${searchQuery}." Try something else`);
       return;
     }
-    this.setState(prevState =>
-      prevState.searchQuery !== this.state.searchQuery
-        ? { photos: data, status: 'loaded' }
-        : { photos: [...this.state.photos, ...data], status: 'loaded' }
-    );
+    setPhotos([...photos, ...data]);
   };
 
-  onHandleClick = click => {
-    const foundImage = this.state.photos.find(photo => photo.tags === click);
-    this.setState({ clickedImg: foundImage, showModal: true });
+  const onHandleClick = click => {
+    const foundImage = photos.find(photo => photo.tags === click);
+    setClickedImg(foundImage);
+    setShowModal(true);
   };
 
-  onCloseModal = () => {
-    this.setState({ showModal: false });
+  const onCloseModal = () => {
+    setShowModal(false);
   };
 
-  render() {
-    const { totalHits, photos, status, showModal, clickedImg } = this.state;
-    return (
-      <AppWrapper>
-        <SearchBar onSubmit={this.getValue} />
-        {photos.length < 1 && <InfoTitle />}
-        <ImageGallery>
-          <ImageGalleryItem
-            photos={photos}
-            onHandleClick={this.onHandleClick}
-          />
-        </ImageGallery>
-        {status === 'pending' && (
-          <LoaderWrapper>
-            <Blocks
-              visible={true}
-              height="80"
-              width="80"
-              ariaLabel="blocks-loading"
-              wrapperStyle={{}}
-              wrapperClass="blocks-wrapper"
-            />
-          </LoaderWrapper>
-        )}
-        {photos.length !== totalHits && photos.length >= 1 && (
-          <Button onLoadMore={this.onLoadMore} />
-        )}
-        {showModal && (
-          <Modal photo={clickedImg} onCloseModal={this.onCloseModal}></Modal>
-        )}
-      </AppWrapper>
-    );
-  }
-}
+  return (
+    <AppWrapper>
+      <SearchBar onSubmit={getValue} />
+      {photos.length < 1 && <InfoTitle />}
+      <ImageGallery>
+        <ImageGalleryItem photos={photos} onHandleClick={onHandleClick} />
+      </ImageGallery>
+      {status === 'pending' && (
+        <Blocks
+          visible={true}
+          height="80"
+          width="80"
+          ariaLabel="blocks-loading"
+          wrapperStyle={{}}
+          wrapperClass="loaderStyle"
+        />
+      )}
+      {photos.length !== totalHits && photos.length >= 1 && (
+        <Button onLoadMore={onLoadMore} />
+      )}
+      {showModal && (
+        <Modal photo={clickedImg} onCloseModal={onCloseModal}></Modal>
+      )}
+    </AppWrapper>
+  );
+};
 
 export default App;
