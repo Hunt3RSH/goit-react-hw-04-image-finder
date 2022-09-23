@@ -27,6 +27,11 @@ const App = () => {
     resetPage();
     setSearchQuery(searchValue);
     setPage(1);
+    pixFetch(searchQuery).then(data => {
+      if (data.totalHits >= 1) {
+        toast.success(`GJ we found ${data.totalHits} images `);
+      }
+    });
   };
 
   useEffect(() => {
@@ -36,9 +41,6 @@ const App = () => {
         .then(data => {
           onHandleData(data.hits);
           setTotalHits(data.totalHits);
-          if (data.totalHits >= 1) {
-            toast.success(`GJ we found ${data.totalHits} images `);
-          }
         })
         .catch(error => console.log(error))
         .finally(() => setStatus(''));
@@ -47,11 +49,7 @@ const App = () => {
   }, [searchQuery, page]);
 
   const onLoadMore = () => {
-    setStatus('pending');
-    pixFetch(searchQuery, page + 1)
-      .then(data => onHandleData(data.hits))
-      .catch(error => console.log(error))
-      .finally(() => setStatus(''));
+    setPage(prevState => (prevState += 1));
   };
 
   const onHandleData = data => {
