@@ -21,10 +21,11 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [totalHits, setTotalHits] = useState(0);
 
-  const resetPage = () => (setPhotos([]), setPage(1));
+  const resetPage = () => setPhotos([]);
 
   const getValue = searchValue => {
     resetPage();
+    setPage(1);
     setSearchQuery(searchValue);
   };
 
