@@ -34,6 +34,7 @@ const App = () => {
       setStatus('pending');
       pixFetch(searchQuery, page)
         .then(data => {
+          setTotalHits(data.totalHits);
           if (data.totalHits >= 1) {
             toast.success(`GJ we found ${data.totalHits} images `);
           }
