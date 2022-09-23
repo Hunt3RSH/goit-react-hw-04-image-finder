@@ -58,7 +58,9 @@ class App extends Component {
 
   onHandleData = data => {
     if (!data.length) {
-      toast.error(`No result by ${this.state.searchQuery}. Try something else`);
+      toast.error(
+        `No result by "${this.state.searchQuery}." Try something else`
+      );
       return;
     }
     this.setState(prevState =>
