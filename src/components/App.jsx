@@ -21,12 +21,11 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [totalHits, setTotalHits] = useState(0);
 
-  const resetPage = () => setPhotos([]);
+  const resetPage = () => (setPhotos([]), setPage(1));
 
   const getValue = searchValue => {
     resetPage();
     setSearchQuery(searchValue);
-    setPage(1);
   };
 
   useEffect(() => {
@@ -36,6 +35,11 @@ const App = () => {
         .then(data => {
           onHandleData(data.hits);
           setTotalHits(data.totalHits);
+          if (data.totalHits >= 1 && page === 1) {
+            return toast.success(
+              `GJ we found ${data.totalHits} images on the "${searchQuery}" request`
+            );
+          }
         })
         .catch(error => console.log(error))
         .finally(() => setStatus(''));
@@ -48,11 +52,6 @@ const App = () => {
   };
 
   const onHandleData = data => {
-    pixFetch(searchQuery).then(data => {
-      if (data.totalHits >= 1) {
-        toast.success(`GJ we found ${data.totalHits} images `);
-      }
-    });
     if (!data.length) {
       toast.error(`No result by "${searchQuery}." Try something else`);
       return;
